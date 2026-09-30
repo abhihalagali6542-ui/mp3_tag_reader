@@ -1,32 +1,16 @@
 #include <stdio.h>
 #include <string.h>
-#include "mp.h"
+#include "view_header.h"
 #include "type.h"
 
 //-------------------------------------------------------------------------------//
 
-static const char* tag[] = {"TIT2","TPE1","TALB","TYER","TCON","TCOM"};
+static const char* tag[] = {"TIT2","TPE1","TALB","TYER","TCON","COMM"};
 int num=1;
 
 //-------------------------------------------------------------------------------//
 
-// check operation type (argv[1][1])
-OperationType check_operationtype(char opt)
-{
-    if(opt == 'v')
-    {
-        return e_view;
-    }
-    else if(opt == 'h')
-    {
-        return e_help;
-    }
-    return e_unsupported;
-}
-
-//-------------------------------------------------------------------------------//
-
-Status read_and_validate_args(char *argv[],ID3 *info)
+Status read_and_validate_args(char *argv[],V_MP3INFO *vinfo)
 {
     // check file extention (.mp3)
     char *dot = strrchr(argv[2],'.');
@@ -35,18 +19,18 @@ Status read_and_validate_args(char *argv[],ID3 *info)
         printf("ERROR : Source file extention must be \".mp3\"\n");
         return e_failure;
     }
-    info->mp3_fname = argv[2];
+    vinfo->mp3_fname = argv[2];
 
     // open file
-    if(open_encode_files(info) == e_failure)
+    if(open_files(vinfo) == e_failure)
     {
         printf("ERROR : Unable to access the file\n");
         return e_failure;
     }
 
-    // check signature first 3 byts as (ID3)
+    // check signature first 3 byts as (V_MP3INFO)
     char signature[3];
-    fread(signature,3,1,info->fptr_mp3);
+    fread(signature,3,1,vinfo->fptr_mp3);
     signature[3]=0;
     if(strcmp(signature,"ID3")!=0)
     {
@@ -55,17 +39,17 @@ Status read_and_validate_args(char *argv[],ID3 *info)
     }
 
     // set offset at 10th position
-    fseek(info->fptr_mp3,10,SEEK_SET);
+    fseek(vinfo->fptr_mp3,10,SEEK_SET);
     return e_success;
 }
 
 //-------------------------------------------------------------------------------//
 
-Status open_encode_files(ID3 *info)
+Status open_files(V_MP3INFO *vinfo)
 {
-    info->fptr_mp3=fopen(info->mp3_fname,"rb");
+    vinfo->fptr_mp3=fopen(vinfo->mp3_fname,"rb");
     // check for NULL
-    if(info->fptr_mp3==NULL)
+    if(vinfo->fptr_mp3==NULL)
     {
         return e_failure;
     }
@@ -91,40 +75,43 @@ uint get_size(unsigned char *size_buffer)
     {
         ptr[i]=size_buffer[i];
     }
-    
-    //printf("size = %u\n",size);
+    // sscanf(size_buffer,"%d",&size);
+    // printf("size = %u\n",size);
     return size;
 }
 
 //-------------------------------------------------------------------------------//
 
-void view_operation(ID3 *info)
+void view_operation(V_MP3INFO *vinfo)
 {
     char tag_buffer[5];
-    unsigned char size_buffer[5];
+    unsigned char size_buffer[4];
     uint size;
 
     printf("-----------------------------------------------------------\n");
-    printf("Sl.No |  Tag Name\t| Information\n");
+    printf("Sl.No |  Tag Name\t| vinformation\n");
     printf("-----------------------------------------------------------\n");
     for(int i=0;i<6;i++)
     {
         // read 4 bytes for file for tags
-        fread(tag_buffer,4,1,info->fptr_mp3);
-        
-        // read 4 bytes for size for song info
-        fread(size_buffer,4,1,info->fptr_mp3);
+        fread(tag_buffer,4,1,vinfo->fptr_mp3);
+        // tag_buffer[4]='\0';
+
+        // read 4 bytes for size for song vinfo
+        fread(size_buffer,4,1,vinfo->fptr_mp3);
         //printf("%s\n",tag_buffer);
-        
+        //printf("%s\n",size_buffer);
+
         size = get_size(size_buffer);
         //printf("%d\n",size);
         
         // skip 3 bytes (2 bytes for flag and 1 bytes for null char)
-        fseek(info->fptr_mp3,3,SEEK_CUR);
+        fseek(vinfo->fptr_mp3,3,SEEK_CUR);
         
         char buffer[size];
-        // read size-1 bytes of song info
-        fread(buffer,size-1,1,info->fptr_mp3);
+        // read size-1 bytes of song vinfo
+        fread(buffer,size-1,1,vinfo->fptr_mp3);
+        buffer[size-1]='\0';
         //printf("%s\n",buffer);
 
         // compare tag_buffer with tags
