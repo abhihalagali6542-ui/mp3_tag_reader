@@ -88,14 +88,12 @@ uint get_e_size(unsigned char *size_buffer)
 void convet_little_to_big(int size, unsigned char *new_size)
 {
     unsigned char *ptr = (unsigned char *)&size;
-    for(int i=0;i<2;i++)
+    int i;
+    for(i=0;i<4;i++)
     {
-        unsigned char temp = ptr[i];
-        ptr[i] = ptr[3-i];
-        ptr[3-i] = temp;
+        new_size[i] = ptr[3-i];
     }
-    //prt[4]='\0';
-    new_size = ptr;
+    //new_size[i]='\0';
 }
 
 //-------------------------------------------------------------------------------//
@@ -122,22 +120,25 @@ void do_edit(E_MP3INFO *einfo)
         // read 4 bytes for size for song einfo
         fread(size_buffer,4,1,einfo->fptr_mp3);
         size = get_e_size(size_buffer);
+        convet_little_to_big(size,size_buffer);
 
         if(strcmp(tag_buffer,einfo->tag_to_edit) == 0)
         {
             // add new info and new size
             convet_little_to_big((strlen(einfo->new_data)+1),new_size);
-            fwrite(new_size,4,1,einfo->fptr_temp_mp3);
-            
+            // for(int i = 0; i < 4; i++)
+            // {
+            //     printf("%02X ", new_size[i]);
+            // }
+            fwrite(new_size,1,4,einfo->fptr_temp_mp3);
+
             char flag_buffer[3];
             fread( flag_buffer,3,1,einfo->fptr_mp3);
             fwrite(flag_buffer,3,1,einfo->fptr_temp_mp3);
 
             fwrite(einfo->new_data,strlen(einfo->new_data),1,einfo->fptr_temp_mp3);
-            if(size != strlen(einfo->new_data))
-            {
-                fseek(einfo->fptr_mp3,size-1,SEEK_CUR);
-            }
+
+            fseek(einfo->fptr_mp3,size-1,SEEK_CUR);
             break;
         }
 
@@ -158,7 +159,9 @@ void do_edit(E_MP3INFO *einfo)
     {
         fwrite(&data,1,1,einfo->fptr_temp_mp3);
     }
-    printf("[ succes ] edited\n");
+    printf("[ success ] edited\n");
+    fclose(einfo->fptr_mp3);
+    fclose(einfo->fptr_temp_mp3);
     return;
 }
 
@@ -180,7 +183,7 @@ Status get_tag_to_edit(char e_tag, E_MP3INFO *einfo)
            einfo->tag_to_edit = "TALB";
             break;
 
-        case 'm':
+        case 'c':
            einfo->tag_to_edit = "TCON";
             break;
 
@@ -188,7 +191,7 @@ Status get_tag_to_edit(char e_tag, E_MP3INFO *einfo)
            einfo->tag_to_edit = "TYER";
             break;
 
-        case 'c':
+        case 'm':
            einfo->tag_to_edit = "COMM";
             break;
         default :

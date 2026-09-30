@@ -20,6 +20,7 @@ int main(int argc,char *argv[])
         }
         view_operation(&vinfo);
    }
+   // check argv for (e)
    else if(argc == 5 && check_operationtype(argv[1][1])==e_edit)
    {
           E_MP3INFO einfo;
@@ -35,9 +36,14 @@ int main(int argc,char *argv[])
    // check argv for (h)
    else if(check_operationtype(argv[1][1])==e_help)
    {
-        printf("Usage : \n");
-        printf("To vinfo : \t./a.out -v filename.mp3\n");
-        printf("To Edit : \t./a.out -e -t/-a/-A/-m/-y/-c filename.mp3\n");
+        printf("1.  -v  -->   to view mp3 file contents\n");
+        printf("2.  -e  -->>  to edit mp3 file contents\n");
+        printf("\t2.1  -t  -->  to edit song title\n");
+        printf("\t2.2  -a  -->  to edit artist name\n");
+        printf("\t2.3  -A  -->  to edit album name\n");
+        printf("\t2.4  -y  -->  to edit year\n");
+        printf("\t2.5  -m  -->  to edit Content type / Genre\n");
+        printf("\t2.6  -c  -->  to edit Comment\n");
    }
    else
    {
@@ -46,7 +52,7 @@ int main(int argc,char *argv[])
           printf("To vinfo : \t./a.out -v filename.mp3\n");
           printf("To Edit : \t./a.out -e -t/-a/-A/-m/-y/-c filename.mp3\n");
    }
-     return 0;
+   return 0;
 }
 
 //-------------------------------------------------------------------------------//

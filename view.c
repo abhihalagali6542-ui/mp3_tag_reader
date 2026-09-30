@@ -89,7 +89,7 @@ void view_operation(V_MP3INFO *vinfo)
     uint size;
 
     printf("-----------------------------------------------------------\n");
-    printf("Sl.No |  Tag Name\t| Information\n");
+    printf("SL.NO |  TAG \t|  INFORMATION\n");
     printf("-----------------------------------------------------------\n");
     for(int i=0;i<6;i++)
     {
@@ -119,12 +119,14 @@ void view_operation(V_MP3INFO *vinfo)
         {
             if(!strcmp(tag_buffer,tag[j]))
             {
-                printf("  %d   | %s \t\t|%s\n",num++,tag_buffer,buffer);
+                printf("  %d   |  %s  \t|  %s\n",num++,tag_buffer,buffer);
                 break;
             }
         }
     }
     printf("-----------------------------------------------------------\n");
+    fclose(vinfo->fptr_mp3);
+    return;
 }    
 
 //-------------------------------------------------------------------------------//
