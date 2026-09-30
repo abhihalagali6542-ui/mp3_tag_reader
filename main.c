@@ -8,7 +8,7 @@
 int main(int argc,char *argv[])
 {
    // check argv for (v)
-   if(argc > 2 && check_operationtype(argv[1][1])==e_view)
+   if(argc == 3 && check_operationtype(argv[1][1])==e_view)
    {
       V_MP3INFO vinfo;
         if(read_and_validate_args(argv, &vinfo)==e_failure)
@@ -20,7 +20,7 @@ int main(int argc,char *argv[])
         }
         view_operation(&vinfo);
    }
-   else if(check_operationtype(argv[1][1])==e_edit)
+   else if(argc == 5 && check_operationtype(argv[1][1])==e_edit)
    {
           E_MP3INFO einfo;
           if(read_and_validate_edit_args(argv,&einfo)==e_failure)

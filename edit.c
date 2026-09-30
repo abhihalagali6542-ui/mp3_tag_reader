@@ -7,7 +7,7 @@
 
 Status read_and_validate_edit_args(char *argv[],E_MP3INFO *einfo)
 {
-    if(get_tag_to_edit(argv[2][1],einfo) == e_failure)
+    if(get_tag_to_edit(argv[2][1], einfo) == e_failure)
     {
         return e_failure;
     }
@@ -18,6 +18,7 @@ Status read_and_validate_edit_args(char *argv[],E_MP3INFO *einfo)
         printf("ERROR : Source file extention must be \".mp3\"\n");
         return e_failure;
     }
+    einfo->new_data=argv[3];
     einfo->mp3_fname = argv[4];
     einfo->temp_mp3_fname= "temp.mp3";
 
@@ -62,7 +63,7 @@ Status open_edit_files(E_MP3INFO *einfo)
 
 //-------------------------------------------------------------------------------//
 
-uint get_size(unsigned char *size_buffer)
+uint get_e_size(unsigned char *size_buffer)
 {
     // convert big endiness to little
     for(int i=0;i<2;i++)
@@ -90,9 +91,10 @@ void convet_little_to_big(int size, unsigned char *new_size)
     for(int i=0;i<2;i++)
     {
         unsigned char temp = ptr[i];
-        ptr[i] = prt[3-i];
-        prt[3-i] = temp;
+        ptr[i] = ptr[3-i];
+        ptr[3-i] = temp;
     }
+    //prt[4]='\0';
     new_size = ptr;
 }
 
@@ -101,13 +103,12 @@ void convet_little_to_big(int size, unsigned char *new_size)
 void do_edit(E_MP3INFO *einfo)
 {
     char tag_buffer[5];
-    char info_buffer[size];
     unsigned char size_buffer[4];
     unsigned char new_size[4];
     uint size;
 
     // copy 10 bytes of header
-    char *header_buffer[10];
+    char header_buffer[10];
     fread(header_buffer,10,1,einfo->fptr_mp3);
     fwrite(header_buffer,10,1,einfo->fptr_temp_mp3);
 
@@ -116,31 +117,48 @@ void do_edit(E_MP3INFO *einfo)
         // read nd write 4 bytes for file for tags
         fread(tag_buffer,4,1,einfo->fptr_mp3);
         fwrite(tag_buffer,4,1,einfo->fptr_temp_mp3);
+        tag_buffer[4]='\0';
 
         // read 4 bytes for size for song einfo
         fread(size_buffer,4,1,einfo->fptr_mp3);
-        size = get_size(size_buffer);
+        size = get_e_size(size_buffer);
 
-        if(strcmp(tag_buffer,tag_to_edit)==0)
+        if(strcmp(tag_buffer,einfo->tag_to_edit) == 0)
         {
             // add new info and new size
-            convet_little_to_big((strlen(argv[3])+1),new_size);
-            fwrite(size_buffer,4,1,einfo->fptr_temp_mp3);
+            convet_little_to_big((strlen(einfo->new_data)+1),new_size);
+            fwrite(new_size,4,1,einfo->fptr_temp_mp3);
+            
+            char flag_buffer[3];
+            fread( flag_buffer,3,1,einfo->fptr_mp3);
+            fwrite(flag_buffer,3,1,einfo->fptr_temp_mp3);
+
+            fwrite(einfo->new_data,strlen(einfo->new_data),1,einfo->fptr_temp_mp3);
+            if(size != strlen(einfo->new_data))
+            {
+                fseek(einfo->fptr_mp3,size-1,SEEK_CUR);
+            }
             break;
         }
 
-        
         fwrite(size_buffer,4,1,einfo->fptr_temp_mp3);
         
         // read 3 bytes (2 bytes for flag and 1 bytes for null char)
-        fread(einfo->fptr_mp3,3,1,einfo->fptr_temp_mp3);
-    
+        char flag_buffer[3];
+        fread( flag_buffer,3,1,einfo->fptr_mp3);
+        fwrite(flag_buffer,3,1,einfo->fptr_temp_mp3);
+        
+        char info_buffer[size];
         // read size-1 bytes of song vinfo
         fread(info_buffer,size-1,1,einfo->fptr_mp3);
         fwrite(info_buffer,size-1,1,einfo->fptr_temp_mp3);
     }
-
-
+    char data;
+    while(fread(&data,1,1,einfo->fptr_mp3) == 1)
+    {
+        fwrite(&data,1,1,einfo->fptr_temp_mp3);
+    }
+    printf("[ succes ] edited\n");
     return;
 }
 
@@ -163,11 +181,11 @@ Status get_tag_to_edit(char e_tag, E_MP3INFO *einfo)
             break;
 
         case 'm':
-           einfo->tag_to_edit = "TYER";
+           einfo->tag_to_edit = "TCON";
             break;
 
         case 'y':
-           einfo->tag_to_edit = "TCON";
+           einfo->tag_to_edit = "TYER";
             break;
 
         case 'c':

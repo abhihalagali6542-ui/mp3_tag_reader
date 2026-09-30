@@ -89,13 +89,13 @@ void view_operation(V_MP3INFO *vinfo)
     uint size;
 
     printf("-----------------------------------------------------------\n");
-    printf("Sl.No |  Tag Name\t| vinformation\n");
+    printf("Sl.No |  Tag Name\t| Information\n");
     printf("-----------------------------------------------------------\n");
     for(int i=0;i<6;i++)
     {
         // read 4 bytes for file for tags
         fread(tag_buffer,4,1,vinfo->fptr_mp3);
-        // tag_buffer[4]='\0';
+        tag_buffer[4]='\0';
 
         // read 4 bytes for size for song vinfo
         fread(size_buffer,4,1,vinfo->fptr_mp3);
